@@ -30,6 +30,7 @@
  */
 
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -40,6 +41,7 @@
 #define CLIENTID    "c-client"
 #define TIMEOUT     100000L
 #define DEBUG       0
+#define TOPIC_INFO       "vehicle-info"
 
 
 int send_file(MQTTClient client,
@@ -138,7 +140,7 @@ int send_file(MQTTClient client,
         if (DEBUG) {
             printf("Publishing file chunk to topic %s offset %lu\n", topic, offset);
         }
-        rc = MQTTClient_publish(client, topic, read_bytes, payload, 1, 0, &token);
+        rc = MQTTClient_publish(client, TOPIC_INFO, read_bytes, payload, 1, 0, &token);
         if (rc != MQTTCLIENT_SUCCESS) {
             printf("Failed to publish file chunk, return code %d\n", rc);
             return -1;
@@ -179,6 +181,8 @@ int send_file(MQTTClient client,
         printf("Failed to publish final message, return code %d\n", rc);
         return -1;
     }
+    printf("message publish completed,the content is \n:");
+    printf("%s",payload);
     return 0;
 }
 
@@ -204,52 +208,52 @@ void read_command_line_arguments(
         long *segments_ttl_seconds,
         long *expire_after_seconds) {
     // Fill in default values
-    *file_name = "myfile.txt";
-    *host = "localhost";
+    *file_name = "vehicle-info.json";
+    *host = "broker.emqx.io";
     *port = 1883;
-    *segments_ttl_seconds = -1;
-    *expire_after_seconds = -1;
+    *segments_ttl_seconds = 5;
+    *expire_after_seconds = 5;
     *client_id = CLIENTID;
-    *username = NULL;
-    *password = NULL;
+    *username = "emqx";
+    *password = "public";
     // Check if -h or --help is passed in
     if (argc == 2 && (strcmp(argv[1], "-h") == 0 || strcmp(argv[1], "--help") == 0)) {
         print_usage();
         exit(0);
     }
-    *file_path = NULL;
-    *file_id = NULL;
+    *file_path = "/workspace/code-arts-mqtt-client-demo/vehicle-info.json";
+    *file_id = "lxm123";
     // Read command line arguments
-    for (int i = 1; i < argc; i+=2) {
-        if (strcmp(argv[i], "--file") == 0) {
-            *file_path = argv[i + 1];
-        } else if (strcmp(argv[i], "--file-id") == 0) {
-            *file_id = argv[i + 1];
-        } else if (strcmp(argv[i], "--file-name") == 0) {
-            *file_name = argv[i + 1];
-        } else if (strcmp(argv[i], "--client-id") == 0) {
-            *client_id = argv[i + 1];
-        } else if (strcmp(argv[i], "--username") == 0) {
-            *username = argv[i + 1];
-        } else if (strcmp(argv[i], "--password") == 0) {
-            *password = argv[i + 1];
-        } else if (strcmp(argv[i], "--host") == 0) {
-            *host = argv[i + 1];
-        } else if (strcmp(argv[i], "--port") == 0) {
-            *port = atoi(argv[i + 1]);
-        } else if (strcmp(argv[i], "--segments-ttl-seconds") == 0) {
-            *segments_ttl_seconds = atol(argv[i + 1]);
-        } else if (strcmp(argv[i], "--expire-after-seconds") == 0) {
-            *expire_after_seconds = atol(argv[i + 1]);
-        } else {
-            printf("Unknown argument %s\n", argv[i]);
-            print_usage();
-            exit(1);
-        }
-        if (DEBUG) {
-            printf("Argument %s %s\n", argv[i], argv[i + 1]);
-        }
-    }
+    // for (int i = 1; i < argc; i+=2) {
+    //     if (strcmp(argv[i], "--file") == 0) {
+    //         *file_path = argv[i + 1];
+    //     } else if (strcmp(argv[i], "--file-id") == 0) {
+    //         *file_id = argv[i + 1];
+    //     } else if (strcmp(argv[i], "--file-name") == 0) {
+    //         *file_name = argv[i + 1];
+    //     } else if (strcmp(argv[i], "--client-id") == 0) {
+    //         *client_id = argv[i + 1];
+    //     } else if (strcmp(argv[i], "--username") == 0) {
+    //         *username = argv[i + 1];
+    //     } else if (strcmp(argv[i], "--password") == 0) {
+    //         *password = argv[i + 1];
+    //     } else if (strcmp(argv[i], "--host") == 0) {
+    //         *host = argv[i + 1];
+    //     } else if (strcmp(argv[i], "--port") == 0) {
+    //         *port = atoi(argv[i + 1]);
+    //     } else if (strcmp(argv[i], "--segments-ttl-seconds") == 0) {
+    //         *segments_ttl_seconds = atol(argv[i + 1]);
+    //     } else if (strcmp(argv[i], "--expire-after-seconds") == 0) {
+    //         *expire_after_seconds = atol(argv[i + 1]);
+    //     } else {
+    //         printf("Unknown argument %s\n", argv[i]);
+    //         print_usage();
+    //         exit(1);
+    //     }
+    //     if (DEBUG) {
+    //         printf("Argument %s %s\n", argv[i], argv[i + 1]);
+    //     }
+    //}
     // Check if --file and --file-id are passed in
     if (*file_path == NULL || *file_id == NULL) {
         printf("Missing required arguments\n");
@@ -286,7 +290,7 @@ int main(int argc, char *argv[]) {
             &port,
             &segments_ttl_seconds,
             &expire_after_seconds);
-    if (DEBUG) {
+    if (DEBUG==0) {
         // Print command line arguments
         printf("file_path: %s\n", file_path);
         printf("file_id: %s\n", file_id);

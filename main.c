@@ -6,9 +6,10 @@
 #define ADDRESS     "tcp://broker.emqx.io:1883"
 #define USERNAME    "emqx"
 #define PASSWORD    "public"
-#define CLIENTID    "c-client"
+#define CLIENTID    "c-client-lxm"
 #define QOS         0
-#define TOPIC       "emqx/c-test"
+#define TOPIC_WARNING       "vehicle-warning" //emqx/c-test
+#define TOPIC_INFO       "vehicle-info" //emqx/c-test
 #define TIMEOUT     10000L
 
 void publish(MQTTClient client, char *topic, char *payload) {
@@ -20,7 +21,7 @@ void publish(MQTTClient client, char *topic, char *payload) {
     MQTTClient_deliveryToken token;
     MQTTClient_publishMessage(client, topic, &message, &token);
     MQTTClient_waitForCompletion(client, token, TIMEOUT);
-    printf("Send `%s` to topic `%s` \n", payload, TOPIC);
+    printf("Send `%s` to topic `%s` \n", payload, TOPIC_WARNING);
 }
 
 int on_message(void *context, char *topicName, int topicLen, MQTTClient_message *message) {
@@ -47,12 +48,12 @@ int main(int argc, char *argv[]) {
         printf("Connected to MQTT Broker!\n");
     }
     // subscribe topic
-    MQTTClient_subscribe(client, TOPIC, QOS);
+    MQTTClient_subscribe(client, TOPIC_WARNING, QOS);
     char payload[16];
     for (int i = 0; i < 100; i += 1) {
         // publish message to broker
         snprintf(payload, 16, "message-%d", i);
-        publish(client, TOPIC, payload);
+        publish(client, TOPIC_INFO, payload);
         sleep(1);
     }
     MQTTClient_disconnect(client, TIMEOUT);
